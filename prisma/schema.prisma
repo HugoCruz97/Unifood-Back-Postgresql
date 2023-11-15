@@ -1,0 +1,81 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                  String                @id @default(uuid())
+  createdAt           DateTime              @default(now())
+  name                String
+  email               String                @unique
+  password            String
+  hasRestaurant       Boolean               @default(false)
+  Restaurant          Restaurant?
+  Favorite_Restaurant Favorite_Restaurant[]
+  Orders              Orders[]
+
+  @@map("tb_usuarios")
+}
+
+model Restaurant {
+  id             String   @id @default(uuid())
+  name           String   @unique
+  createdAt      DateTime @default(now())
+  logoUrl        String
+  address        String
+  cep            String
+  description    String
+  contact_number String
+  user_id        String   @unique
+
+  user     User       @relation(fields: [user_id], references: [id])
+  Products Products[]
+  Orders   Orders[]
+
+  @@map("tb_restaurantes")
+}
+
+model Favorite_Restaurant {
+  id            String @id @default(uuid())
+  user_id       String
+  restaurant_id String
+
+  user User @relation(fields: [user_id], references: [id])
+
+  @@map("tb_restaurantes_favoritos")
+}
+
+model Products {
+  id            String     @id @default(uuid())
+  name          String
+  price         Int
+  quantity      Int
+  description   String
+  restaurant    Restaurant @relation(fields: [restaurant_id], references: [id])
+  restaurant_id String
+
+  @@map("tb_produtos")
+}
+
+model Orders {
+  id            String     @id @default(uuid())
+  user_id       String
+  restaurant_id String
+  createdAt     DateTime   @default(now())
+  updateAt      DateTime   @default(now())
+  product_name  String
+  quantity      Int
+  price         Int
+  status        String     @default("Finalizado")
+  user          User       @relation(fields: [user_id], references: [id])
+  restaurant    Restaurant @relation(fields: [restaurant_id], references: [id])
+
+  @@map("tb_pedidos")
+}
