@@ -10,7 +10,6 @@ export async function ordersRoutes(app: FastifyInstance) {
   app.post('/order', async(request) => {
     const bodySchema = z.object({
       user_id: z.string(),
-      id: z.string(),
       name: z.string(),
       qtd: z.number(),
       priceTotal: z.number(),
@@ -19,7 +18,7 @@ export async function ordersRoutes(app: FastifyInstance) {
 
     const body = bodySchema.parse(request.body)
 
-    const { user_id, priceTotal, name, qtd, restaurant_id, id } = body
+    const { user_id, priceTotal, name, qtd, restaurant_id } = body
 
     await prisma.orders.create({
       data: {
@@ -27,13 +26,36 @@ export async function ordersRoutes(app: FastifyInstance) {
         price: priceTotal,
         product_name: name,
         restaurant_id,
-        id,
         quantity: qtd
       }
     })
   })
 
-  app.get('/orders/:user_id', async(request) => {
+  app.get('/orders/:restaurant_id', async(request) => {
+    const paramsSchema = z.object({
+      restaurant_id: z.string(),
+    })
+
+    const params = paramsSchema.parse(request.params)
+
+    const { restaurant_id } = params
+
+    const orders = await prisma.orders.findMany({
+      where: {
+        restaurant_id
+      },
+      include: {
+        user: true
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    })
+
+    return orders
+  })
+
+  app.get('/user-orders/:user_id', async(request) => {
     const paramsSchema = z.object({
       user_id: z.string(),
     })
@@ -48,6 +70,9 @@ export async function ordersRoutes(app: FastifyInstance) {
       },
       include: {
         restaurant: true
+      },
+      orderBy: {
+        createdAt: 'desc'
       }
     })
 
